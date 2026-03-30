@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مِسجاف</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0a0a;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-dark);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* LOADER */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    #loader.loaded {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-brand {
+      font-family: 'Aref Ruqaa', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .loader-track {
+      width: min(240px, 50vw);
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    #loader-bar {
+      width: 0%;
+      height: 100%;
+      background: #fff;
+      border-radius: 1px;
+      transition: width 0.15s ease;
+    }
+
+    #loader-percent {
+      font-family: 'Aref Ruqaa', serif;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.2em;
+    }
+
+    /* CANVAS */
+    .canvas-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      transition: filter 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .canvas-wrap.blurred {
+      filter: blur(5px) brightness(0.8);
+    }
+
+    .canvas-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* TEXT OVERLAYS */
+    .text-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .text-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .overlay-text {
+      font-family: 'Aref Ruqaa', serif;
+      font-size: clamp(1.6rem, 4vw, 3rem);
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      line-height: 1.8;
+      max-width: 750px;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    /* BRAND OVERLAY */
+    #brand-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5rem;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #brand-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .brand-name {
+      font-family: 'Aref Ruqaa', serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      text-shadow: 0 0 80px rgba(255, 255, 255, 0.15);
+    }
+
+    .buy-link {
+      font-family: 'Aref Ruqaa', serif;
+      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      font-weight: 400;
+      color: #fff;
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      padding: 0.8rem 3rem;
+      transition: background 0.3s ease, color 0.3s ease;
+      cursor: pointer;
+    }
+
+    .buy-link:hover {
+      background: #fff;
+      color: var(--bg-dark);
+    }
+
+    /* SCROLL HINT */
+    #scroll-hint {
+      position: fixed;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      color: rgba(255, 255, 255, 0.45);
+      animation: hintBounce 2s ease-in-out infinite;
+    }
+
+    @keyframes hintBounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(10px); }
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      .brand-name {
+        font-size: clamp(3rem, 14vw, 5rem);
+      }
+
+      .buy-link {
+        font-size: 1.1rem;
+        padding: 0.7rem 2.2rem;
+      }
+
+      .overlay-text {
+        font-size: clamp(1.3rem, 5vw, 1.8rem);
+        max-width: 90vw;
+        line-height: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="loader-brand" dir="rtl">مِسجاف</div>
+    <div class="loader-track">
+      <div id="loader-bar"></div>
+    </div>
+    <div id="loader-percent">0%</div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <!-- TEXT OVERLAY — Scene 1 -->
+  <div class="text-overlay" id="overlay-1" dir="rtl">
+    <p class="overlay-text">سجاد يُعلق, لا يُفرش, يُضيء زواياكم</p>
+  </div>
+
+  <!-- BRAND OVERLAY — Scene 2 -->
+  <div id="brand-overlay" dir="rtl">
+    <h1 class="brand-name">مِسجاف</h1>
+    <a href="https://5ocwcn.zid.store/" class="buy-link" target="_blank" rel="noopener">للطلب</a>
+  </div>
+
+  <!-- SCROLL HINT -->
+  <div id="scroll-hint">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M19 12l-7 7-7-7"/>
+    </svg>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var SCENES = [
+        { frame: 32,  overlay: null,            blur: false },
+        { frame: 95,  overlay: "overlay-1",     blur: true  },
+        { frame: 130, overlay: "brand-overlay", blur: false }
+      ];
+
+      var FRAME_START = 32;
+      var FRAME_END   = 130;
+      var FRAME_PATH  = "frames/frame_";
+      var FRAME_EXT   = ".webp";
+
+      var loader        = document.getElementById("loader");
+      var loaderBar     = document.getElementById("loader-bar");
+      var loaderPercent = document.getElementById("loader-percent");
+      var canvasWrap    = document.getElementById("canvas-wrap");
+      var canvas        = document.getElementById("canvas");
+      var ctx           = canvas.getContext("2d");
+      var scrollHint    = document.getElementById("scroll-hint");
+
+      var frames       = {};
+      var currentFrame = FRAME_START;
+      var currentScene = 0;
+      var isAnimating  = false;
+      var ready        = false;
+
+      function resizeCanvas() {
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width  = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width  = window.innerWidth + "px";
+        canvas.style.height = window.innerHeight + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawFrame(currentFrame);
+      }
+
+      function drawFrame(index) {
+        var img = frames[index];
+        if (!img) return;
+        var cw = window.innerWidth;
+        var ch = window.innerHeight;
+        var iw = img.naturalWidth;
+        var ih = img.naturalHeight;
+        var scale = Math.max(cw / iw, ch / ih) * 1.05;
+        var dw = iw * scale;
+        var dh = ih * scale;
+        var dx = (cw - dw) / 2;
+        var dy = (ch - dh) / 2;
+        ctx.fillStyle = "#0a0a0a";
+        ctx.fillRect(0, 0, cw, ch);
+        ctx.drawImage(img, dx, dy, dw, dh);
+      }
+
+      function padNumber(n) {
+        return String(n).padStart(4, "0");
+      }
+
+      function loadFrame(num) {
+        return new Promise(function (resolve) {
+          var img = new Image();
+          img.onload  = function () { frames[num] = img; resolve(); };
+          img.onerror = function () { resolve(); };
+          img.src = FRAME_PATH + padNumber(num) + FRAME_EXT;
+        });
+      }
+
+      async function preloadFrames() {
+        var total = FRAME_END - FRAME_START + 1;
+        var loaded = 0;
+
+        function tick() {
+          loaded++;
+          var pct = Math.round((loaded / total) * 100);
+          loaderBar.style.width = pct + "%";
+          loaderPercent.textContent = pct + "%";
+        }
+
+        var keyNums = SCENES.map(function (s) { return s.frame; });
+        await Promise.all(keyNums.map(function (n) { return loadFrame(n).then(tick); }));
+
+        currentFrame = FRAME_START;
+        drawFrame(FRAME_START);
+
+        var rest = [];
+        for (var i = FRAME_START; i <= FRAME_END; i++) {
+          if (keyNums.indexOf(i) === -1) rest.push(i);
+        }
+
+        while (rest.length) {
+          var batch = rest.splice(0, 20);
+          await Promise.all(batch.map(function (n) { return loadFrame(n).then(tick); }));
+        }
+
+        loader.classList.add("loaded");
+        ready = true;
+      }
+
+      function hideOverlay(id, done) {
+        var el = document.getElementById(id);
+        if (!el) { if (done) done(); return; }
+        gsap.to(el, {
+          opacity: 0,
+          duration: 0.35,
+          ease: "power2.in",
+          onComplete: function () {
+            el.classList.remove("visible");
+            if (done) done();
+          }
+        });
+      }
+
+      function showOverlay(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add("visible");
+
+        if (id === "brand-overlay") {
+          gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.6, ease: "power2.out" });
+          gsap.from(".brand-name", {
+            y: 40, opacity: 0, duration: 1.1, ease: "power3.out", delay: 0.15
+          });
+          gsap.from(".buy-link", {
+            y: 25, opacity: 0, duration: 0.9, ease: "power3.out", delay: 0.5
+          });
+        } else {
+          gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" });
+          var txt = el.querySelector(".overlay-text");
+          if (txt) {
+            gsap.from(txt, {
+              y: 50, scale: 0.95, opacity: 0, duration: 1.0, ease: "power3.out", delay: 0.25
+            });
+          }
+        }
+      }
+
+      function goToScene(index) {
+        if (index < 0 || index >= SCENES.length) return;
+        if (isAnimating) return;
+
+        var prev = SCENES[currentScene];
+        var next = SCENES[index];
+        isAnimating = true;
+        currentScene = index;
+
+        if (prev.overlay) {
+          hideOverlay(prev.overlay);
+        }
+
+        if (next.blur) {
+          canvasWrap.classList.add("blurred");
+        } else {
+          canvasWrap.classList.remove("blurred");
+        }
+
+        var proxy = { f: currentFrame };
+        gsap.to(proxy, {
+          f: next.frame,
+          duration: 2.5,
+          ease: "power2.inOut",
+          onUpdate: function () {
+            var f = Math.round(proxy.f);
+            if (f !== currentFrame && frames[f]) {
+              currentFrame = f;
+              drawFrame(f);
+            }
+          },
+          onComplete: function () {
+            currentFrame = next.frame;
+            drawFrame(next.frame);
+
+            if (next.overlay) {
+              showOverlay(next.overlay);
+            }
+
+            if (index === SCENES.length - 1) {
+              gsap.to(scrollHint, { opacity: 0, duration: 0.4 });
+            } else {
+              gsap.to(scrollHint, { opacity: 1, duration: 0.4 });
+            }
+
+            gsap.delayedCall(0.3, function () {
+              isAnimating = false;
+            });
+          }
+        });
+      }
+
+      var wheelAccum = 0;
+      var wheelTimer = null;
+      var WHEEL_THRESHOLD = 60;
+
+      function onWheel(e) {
+        e.preventDefault();
+        if (!ready || isAnimating) return;
+
+        wheelAccum += e.deltaY;
+
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(function () { wheelAccum = 0; }, 200);
+
+        if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
+          if (wheelAccum > 0)  goToScene(currentScene + 1);
+          else                 goToScene(currentScene - 1);
+          wheelAccum = 0;
+        }
+      }
+
+      var touchStartY = 0;
+      function onTouchStart(e) { touchStartY = e.touches[0].clientY; }
+      function onTouchEnd(e) {
+        if (!ready || isAnimating) return;
+        var diff = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(diff) < 50) return;
+        if (diff > 0) goToScene(currentScene + 1);
+        else          goToScene(currentScene - 1);
+      }
+
+      function onKeyDown(e) {
+        if (!ready || isAnimating) return;
+        if (e.key === "ArrowDown" || e.key === " ")    { e.preventDefault(); goToScene(currentScene + 1); }
+        if (e.key === "ArrowUp")                        { e.preventDefault(); goToScene(currentScene - 1); }
+      }
+
+      function init() {
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+        window.addEventListener("wheel", onWheel, { passive: false });
+        window.addEventListener("touchstart", onTouchStart, { passive: true });
+        window.addEventListener("touchend", onTouchEnd, { passive: true });
+        window.addEventListener("keydown", onKeyDown);
+        preloadFrames();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+
+</body>
+</html>
